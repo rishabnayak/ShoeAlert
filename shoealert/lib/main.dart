@@ -1,15 +1,11 @@
-// Copyright (c) 2020 Objectivity. All rights reserved.
-// Use of this source code is governed by The MIT License (MIT) that can be
-// found in the LICENSE file.
-
 import 'dart:async';
 import 'dart:io' show Platform;
 
-import 'package:beacon_monitoring/beacon_monitoring.dart';
-import 'package:flutter/foundation.dart';
+import 'package:beacons_plugin/beacons_plugin.dart';
 import 'package:flutter/material.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(MyApp());
 }
 
@@ -18,19 +14,13 @@ class MyApp extends StatefulWidget {
   _MyAppState createState() => _MyAppState();
 }
 
-/// This method will be called outside this flutter engine, so we cannot change the state of [_MyAppState] in it.
-void backgroundMonitoringCallback(MonitoringResult result) {
-  print('Background monitoring received: $result');
-}
-
 class _MyAppState extends State<MyApp> {
-  var _bluetoothEnabled = 'UNKNOWN';
-  var _locationEnabled = 'UNKNOWN';
-  var _locationPermission = 'UNKNOWN';
-  var _debug = false;
+  String _beaconResult = 'Not Scanned Yet.';
+  int _nrMessaggesReceived = 0;
+  var isRunning = false;
 
-  StreamSubscription _monitoringStreamSubscription;
-  StreamSubscription _rangingStreamSubscription;
+  final StreamController<String> beaconEventsController =
+      StreamController<String>.broadcast();
 
   @override
   void initState() {
@@ -38,127 +28,64 @@ class _MyAppState extends State<MyApp> {
     initPlatformState();
   }
 
+  @override
+  void dispose() {
+    beaconEventsController.close();
+    super.dispose();
+  }
+
   // Platform messages are asynchronous, so we initialize in an async method.
   Future<void> initPlatformState() async {
-    var locationPermission = await checkLocationPermission();
-    var bluetoothEnabled = await isBluetoothEnabled();
-    var locationEnabled = await isLocationEnabled();
+    if (Platform.isAndroid) {
+      //Prominent disclosure
+      await BeaconsPlugin.setDisclosureDialogMessage(
+          title: "Need Location Permission",
+          message: "This app collects location data to work with beacons.");
 
-    setDebug(_debug);
-
-    if (locationPermission != LocationPermission.always) {
-      await requestLocationPermission();
+      //Only in case, you want the dialog to be shown again. By Default, dialog will never be shown if permissions are granted.
+      //await BeaconsPlugin.clearDisclosureDialogShowFlag(false);
     }
+
+    BeaconsPlugin.listenToBeacons(beaconEventsController);
+
+    await BeaconsPlugin.addRegion(
+        "ShoeAlert", "E2C56DB5-DFFB-48D2-B060-D0F5A71096E0");
+
+    beaconEventsController.stream.listen(
+        (data) {
+          if (data.isNotEmpty) {
+            setState(() {
+              _beaconResult = data;
+              _nrMessaggesReceived++;
+            });
+            print("Beacons DataReceived: " + data);
+          }
+        },
+        onDone: () {},
+        onError: (error) {
+          print("Error: $error");
+        });
+
+    //Send 'true' to run in background
+    await BeaconsPlugin.runInBackground(true);
 
     if (Platform.isAndroid) {
-      if (!bluetoothEnabled) openBluetoothSettings();
-      if (!locationEnabled) openLocationSettings();
+      BeaconsPlugin.channel.setMethodCallHandler((call) async {
+        if (call.method == 'scannerReady') {
+          await BeaconsPlugin.startMonitoring;
+          setState(() {
+            isRunning = true;
+          });
+        }
+      });
     } else if (Platform.isIOS) {
-      if (!bluetoothEnabled || !locationEnabled) openApplicationSettings();
+      await BeaconsPlugin.startMonitoring;
+      setState(() {
+        isRunning = true;
+      });
     }
 
-    await registerAllRegions([
-      Region(
-          identifier: 'ShoeAlert',
-          ids: ['E2C56DB5-DFFB-48D2-B060-D0F5A71096E0'])
-    ]);
-
-    locationPermission = await checkLocationPermission();
-    bluetoothEnabled = await isBluetoothEnabled();
-    locationEnabled = await isLocationEnabled();
-
-    setState(() {
-      _locationPermission = describeEnum(locationPermission);
-      _bluetoothEnabled = bluetoothEnabled ? 'ENABLED' : 'DISABLED';
-      _locationEnabled = locationEnabled ? 'ENABLED' : 'DISABLED';
-    });
-
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
     if (!mounted) return;
-  }
-
-  void _turnDebugOn() {
-    setDebug(true);
-    setState(() {
-      _debug = true;
-    });
-  }
-
-  void _turnDebugOff() {
-    setDebug(false);
-    setState(() {
-      _debug = false;
-    });
-  }
-
-  void _startBackgroundMonitoring() {
-    startBackgroundMonitoring(backgroundMonitoringCallback).catchError(
-      (e) => debugPrint(
-        'startBackgroundMonitoring catchError: $e',
-      ),
-    );
-  }
-
-  void _stopBackgroundMonitoring() {
-    stopBackgroundMonitoring();
-  }
-
-  bool _isListeningMonitoringStream() {
-    return _monitoringStreamSubscription != null;
-  }
-
-  void _startListeningMonitoringStream() {
-    if (!_isListeningMonitoringStream()) {
-      setState(() {
-        _monitoringStreamSubscription = monitoring().listen(
-          (event) {
-            print("Monitoring stream received: $event");
-          },
-          onError: (e) => debugPrint(
-            '_startListeningMonitoringStream catchError: $e',
-          ),
-        );
-      });
-    }
-  }
-
-  void _stopListeningMonitoringStream() {
-    if (_isListeningMonitoringStream()) {
-      _monitoringStreamSubscription.cancel();
-      setState(() {
-        _monitoringStreamSubscription = null;
-      });
-    }
-  }
-
-  bool _isListeningRangingStream() {
-    return _rangingStreamSubscription != null;
-  }
-
-  void _startListeningRangingStream() {
-    if (!_isListeningRangingStream()) {
-      setState(() {
-        _rangingStreamSubscription = ranging().listen(
-          (event) {
-            print("Ranging stream received: $event");
-          },
-          onError: (e) => debugPrint(
-            '_startListeningRangingStream catchError: $e',
-          ),
-        );
-      });
-    }
-  }
-
-  void _stopListeningRangingStream() {
-    if (_isListeningRangingStream()) {
-      _rangingStreamSubscription.cancel();
-      setState(() {
-        _rangingStreamSubscription = null;
-      });
-    }
   }
 
   @override
@@ -166,124 +93,57 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       home: Scaffold(
         appBar: AppBar(
-          title: const Text('Plugin example app'),
+          title: const Text('Monitoring Beacons'),
         ),
         body: Center(
-          child: ListView(
-            children: [
-              Text('Bluetooth enabled: $_bluetoothEnabled'),
-              Text('Location enabled: $_locationEnabled'),
-              Text('Location permission: $_locationPermission'),
-              _createDebugButton(),
-              _createBackgroundMonitoringButtons(),
-              _createListeningMonitoringStreamButton(),
-              _createListeningRangingStreamButton(),
-              _createGenericButton(
-                'IS BLUETOOTH ENABLED',
-                isBluetoothEnabled,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Text('$_beaconResult'),
+              Padding(
+                padding: EdgeInsets.all(10.0),
               ),
-              _createGenericButton(
-                'OPEN BLUETOOTH SETTINGS',
-                openBluetoothSettings,
+              Text('$_nrMessaggesReceived'),
+              SizedBox(
+                height: 20.0,
               ),
-              _createGenericButton(
-                'IS LOCATION ENABLED',
-                isLocationEnabled,
+              Visibility(
+                visible: isRunning,
+                child: RaisedButton(
+                  onPressed: () async {
+                    if (Platform.isAndroid) {
+                      await BeaconsPlugin.stopMonitoring;
+
+                      setState(() {
+                        isRunning = false;
+                      });
+                    }
+                  },
+                  child: Text('Stop Scanning', style: TextStyle(fontSize: 20)),
+                ),
               ),
-              _createGenericButton(
-                'CHECK LOCATION PERMISSION',
-                checkLocationPermission,
+              SizedBox(
+                height: 20.0,
               ),
-              _createGenericButton(
-                'REQUEST LOCATION PERMISSION',
-                requestLocationPermission,
-              ),
-              _createGenericButton(
-                'OPEN LOCATION SETTINGS',
-                openLocationSettings,
-              ),
-              _createGenericButton(
-                'IS MONITORING STARTED',
-                isMonitoringStarted,
-              ),
+              Visibility(
+                visible: !isRunning,
+                child: RaisedButton(
+                  onPressed: () async {
+                    initPlatformState();
+                    await BeaconsPlugin.startMonitoring;
+
+                    setState(() {
+                      isRunning = true;
+                    });
+                  },
+                  child: Text('Start Scanning', style: TextStyle(fontSize: 20)),
+                ),
+              )
             ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget _createDebugButton() {
-    if (_debug) {
-      return RaisedButton(
-        onPressed: () => _turnDebugOff(),
-        child: Text("Turn debug off"),
-      );
-    } else {
-      return RaisedButton(
-        onPressed: () => _turnDebugOn(),
-        child: Text("Turn debug on"),
-      );
-    }
-  }
-
-  Widget _createBackgroundMonitoringButtons() {
-    return Row(
-      children: [
-        Flexible(
-          child: RaisedButton(
-            onPressed: () => _startBackgroundMonitoring(),
-            child: Text(
-              "Start background monitoring",
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
-        Flexible(
-          child: RaisedButton(
-            onPressed: () => _stopBackgroundMonitoring(),
-            child: Text(
-              "Stop background monitoring",
-              textAlign: TextAlign.center,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _createListeningMonitoringStreamButton() {
-    if (!_isListeningMonitoringStream()) {
-      return RaisedButton(
-        onPressed: () => _startListeningMonitoringStream(),
-        child: Text("Start listening on monitoring stream"),
-      );
-    } else {
-      return RaisedButton(
-        onPressed: () => _stopListeningMonitoringStream(),
-        child: Text("Stop listening on monitoring stream"),
-      );
-    }
-  }
-
-  Widget _createListeningRangingStreamButton() {
-    if (!_isListeningRangingStream()) {
-      return RaisedButton(
-        onPressed: () => _startListeningRangingStream(),
-        child: Text("Start listening on ranging stream"),
-      );
-    } else {
-      return RaisedButton(
-        onPressed: () => _stopListeningRangingStream(),
-        child: Text("Stop listening on ranging stream"),
-      );
-    }
-  }
-
-  Widget _createGenericButton(String text, Function onPressed) {
-    return RaisedButton(
-      onPressed: onPressed,
-      child: Text(text),
     );
   }
 }

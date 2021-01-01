@@ -1,5 +1,5 @@
 PODS:
-  - beacon_monitoring (0.0.1):
+  - beacons_plugin (0.0.1):
     - Flutter
   - Flutter (1.0.0)
   - integration_test (0.0.1):
@@ -10,15 +10,15 @@ PODS:
     - Flutter
 
 DEPENDENCIES:
-  - beacon_monitoring (from `.symlinks/plugins/beacon_monitoring/ios`)
+  - beacons_plugin (from `.symlinks/plugins/beacons_plugin/ios`)
   - Flutter (from `Flutter`)
   - integration_test (from `.symlinks/plugins/integration_test/ios`)
   - pedometer (from `.symlinks/plugins/pedometer/ios`)
   - permission_handler (from `.symlinks/plugins/permission_handler/ios`)
 
 EXTERNAL SOURCES:
-  beacon_monitoring:
-    :path: ".symlinks/plugins/beacon_monitoring/ios"
+  beacons_plugin:
+    :path: ".symlinks/plugins/beacons_plugin/ios"
   Flutter:
     :path: Flutter
   integration_test:
@@ -29,7 +29,7 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/permission_handler/ios"
 
 SPEC CHECKSUMS:
-  beacon_monitoring: a356bb2c926d065f61a209cfcc6eee8cbccaa8a4
+  beacons_plugin: 451bca1eea362d21793d61d58fa26d494cf19718
   Flutter: 434fef37c0980e73bb6479ef766c45957d4b510c
   integration_test: 5ed24a436eb7ec17b6a13046e9bf7ca4a404e59e
   pedometer: 381969883680ade42559782cc41a3bbd453d8234

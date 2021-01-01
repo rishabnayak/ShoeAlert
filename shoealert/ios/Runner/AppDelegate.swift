@@ -1,29 +1,16 @@
 import UIKit
 import Flutter
-import beacon_monitoring
-
+import CoreLocation
+    
 @UIApplicationMain
 @objc class AppDelegate: FlutterAppDelegate {
+  let locationManager = CLLocationManager()
   override func application(
-    _ application: UIApplication,
-    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+  _ application: UIApplication,
+  didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    setupAppDelegateRegistry()
-    setupBeaconMonitoringPluginCallback()
+    locationManager.requestAlwaysAuthorization()
+    GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
-  }
-    
-  static func registerPlugins(with registry: FlutterPluginRegistry) {
-    GeneratedPluginRegistrant.register(with: registry)
-  }
-    
-  private func setupAppDelegateRegistry() {
-    AppDelegate.registerPlugins(with: self)
-  }
-    
-  private func setupBeaconMonitoringPluginCallback() {
-    BeaconMonitoringPlugin.setPluginRegistrantCallback { registry in
-      AppDelegate.registerPlugins(with: registry)
-    }
   }
 }

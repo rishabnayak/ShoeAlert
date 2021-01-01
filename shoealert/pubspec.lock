@@ -36,20 +36,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "2.5.0-nullsafety.3"
-  beacon_monitoring:
+  beacons_plugin:
     dependency: "direct main"
     description:
-      name: beacon_monitoring
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.0.1"
-  beacon_monitoring_platform_interface:
-    dependency: transitive
-    description:
-      name: beacon_monitoring_platform_interface
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "1.0.0"
+      path: "/Users/rishabnayak/Desktop/Projects/simple_beacons_flutter/"
+      relative: false
+    source: path
+    version: "1.0.19"
   boolean_selector:
     dependency: transitive
     description:
@@ -425,4 +418,4 @@ packages:
     version: "2.2.1"
 sdks:
   dart: ">=2.12.0-0.0 <3.0.0"
-  flutter: ">=1.17.0 <2.0.0"
+  flutter: ">=1.12.8 <2.0.0"
