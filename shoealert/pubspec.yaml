@@ -24,6 +24,7 @@ dependencies:
   flutter:
     sdk: flutter
   pedometer: ^2.0.2
+  beacon_monitoring: ^1.0.1
   permission_handler: ^5.0.1+1
 
   # The following adds the Cupertino Icons font to your application.
