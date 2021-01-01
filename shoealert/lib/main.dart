@@ -57,8 +57,11 @@ class _MyAppState extends State<MyApp> {
       if (!bluetoothEnabled || !locationEnabled) openApplicationSettings();
     }
 
-    await registerAllRegions(
-        [Region(identifier: 'E2C56DB5-DFFB-48D2-B060-D0F5A71096E0')]);
+    await registerAllRegions([
+      Region(
+          identifier: 'ShoeAlert',
+          ids: ['E2C56DB5-DFFB-48D2-B060-D0F5A71096E0'])
+    ]);
 
     locationPermission = await checkLocationPermission();
     bluetoothEnabled = await isBluetoothEnabled();
