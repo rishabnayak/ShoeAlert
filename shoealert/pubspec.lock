@@ -39,8 +39,8 @@ packages:
   beacons_plugin:
     dependency: "direct main"
     description:
-      path: "/Users/rishabnayak/Desktop/Projects/simple_beacons_flutter/"
-      relative: false
+      path: "../../simple_beacons_flutter"
+      relative: true
     source: path
     version: "1.0.19"
   boolean_selector:
