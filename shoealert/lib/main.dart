@@ -54,7 +54,6 @@ class _MyAppState extends State<MyApp> {
   }
 
   void onStepCount(StepCount event) {
-    print(event);
     setState(() {
       _steps = event.steps.toString();
     });
@@ -73,22 +72,18 @@ class _MyAppState extends State<MyApp> {
       await flutterLocalNotificationsPlugin.show(
           0, 'Stopped!', 'You\'ve stopped!', platformChannelSpecifics);
     }
-    print(event);
     setState(() {
       _status = event.status;
     });
   }
 
   void onPedestrianStatusError(error) {
-    print('onPedestrianStatusError: $error');
     setState(() {
       _status = 'Pedestrian Status not available';
     });
-    print(_status);
   }
 
   void onStepCountError(error) {
-    print('onStepCountError: $error');
     setState(() {
       _steps = 'Step Count not available';
     });
@@ -123,19 +118,27 @@ class _MyAppState extends State<MyApp> {
     await BeaconsPlugin.addRegion(
         "ShoeAlert", "E2C56DB5-DFFB-48D2-B060-D0F5A71096E0");
 
-    beaconEventsController.stream.listen(
-        (data) {
-          if (data.isNotEmpty) {
-            if (jsonDecode(data)["uuid"].toString().toUpperCase() ==
-                "E2C56DB5-DFFB-48D2-B060-D0F5A71096E0") {
-              print(data);
-            }
-          }
-        },
-        onDone: () {},
-        onError: (error) {
-          print("Error: $error");
-        });
+    beaconEventsController.stream.listen((data) {
+      if (data.isNotEmpty) {
+        if (jsonDecode(data)["uuid"].toString().toUpperCase() ==
+            "E2C56DB5-DFFB-48D2-B060-D0F5A71096E0") {
+          // data format
+          // {
+          //   "name": "ShoeAlert",
+          //   "uuid": "e2c56db5-dffb-48d2-b060-d0f5a71096e0",
+          //   "macAddress": "D2:01:5F:E3:6B:B1",
+          //   "major": "0",
+          //   "minor": "0",
+          //   "distance": "0.72",
+          //   "proximity": "Near",
+          //   "scanTime": "16 January 2021 03:56:52 PM",
+          //   "rssi": "-46",
+          //   "txPower": "-54"
+          //   }
+          print(data);
+        }
+      }
+    }, onDone: () {}, onError: () {});
 
     await BeaconsPlugin.runInBackground(true);
     await BeaconsPlugin.startMonitoring;
