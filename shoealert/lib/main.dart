@@ -9,6 +9,11 @@ import 'package:beacons_plugin/beacons_plugin.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+// data to collect - would like to be able to make a histogram
+// save walking/not walking data
+// data every 10 seconds - range (in numbers) of BLE device (for development)
+// save add timer started/stopped/ended data
+
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 final AndroidInitializationSettings initializationSettingsAndroid =
@@ -26,10 +31,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
   runApp(MyApp());
-}
-
-String formatDate(DateTime d) {
-  return d.toString().substring(0, 19);
 }
 
 class MyApp extends StatefulWidget {
@@ -53,6 +54,7 @@ class _MyAppState extends State<MyApp> {
   }
 
   void handleTimeout() async {
+    print("user was walking without the shoe");
     await flutterLocalNotificationsPlugin.show(
         0, 'Alert!', 'Wear Your Shoes!', platformChannelSpecifics);
   }
