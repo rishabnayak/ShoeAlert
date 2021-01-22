@@ -58,7 +58,6 @@ class _MyAppState extends State<MyApp> {
   }
 
   void handleTimeout() async {
-    print("user was walking without the shoe");
     FlutterLogs.logToFile(
         logFileName: LOG_LOCATION,
         overwrite: false,
@@ -85,7 +84,6 @@ class _MyAppState extends State<MyApp> {
   }
 
   void onPedestrianStatusChanged(PedestrianStatus event) async {
-    print(event.status);
     FlutterLogs.logToFile(
         logFileName: LOG_LOCATION,
         overwrite: false,
@@ -96,7 +94,6 @@ class _MyAppState extends State<MyApp> {
         shoeProximity != "Near" &&
         !timerRunning) {
       timer = startTimeout(timerLength);
-      print("timer started because user is far away and walking");
       FlutterLogs.logToFile(
           logFileName: LOG_LOCATION,
           overwrite: false,
@@ -105,8 +102,6 @@ class _MyAppState extends State<MyApp> {
     } else if (event.status == "stopped" && timerRunning) {
       timerRunning = !timerRunning;
       timer.cancel();
-      print(
-          "timer canceled because user has stopped walking while timer is running");
       FlutterLogs.logToFile(
           logFileName: LOG_LOCATION,
           overwrite: false,
@@ -155,7 +150,6 @@ class _MyAppState extends State<MyApp> {
                 if (proximity == "Immediate" || proximity == "Near") {
                   timerRunning = !timerRunning;
                   timer.cancel();
-                  print("timer canceled because user is close to shoe");
                   FlutterLogs.logToFile(
                       logFileName: LOG_LOCATION,
                       overwrite: false,
@@ -176,7 +170,15 @@ class _MyAppState extends State<MyApp> {
         });
 
     await BeaconsPlugin.runInBackground(true);
-    await BeaconsPlugin.startMonitoring;
+    if (Platform.isAndroid) {
+      BeaconsPlugin.channel.setMethodCallHandler((call) async {
+        if (call.method == 'scannerReady') {
+          await BeaconsPlugin.startMonitoring;
+        }
+      });
+    } else if (Platform.isIOS) {
+      await BeaconsPlugin.startMonitoring;
+    }
 
     if (!mounted) return;
   }
