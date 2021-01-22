@@ -5,14 +5,15 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import 'package:pedometer/pedometer.dart';
+import 'package:flutter_logs/flutter_logs.dart';
 import 'package:beacons_plugin/beacons_plugin.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 // data to collect - would like to be able to make a histogram
-// save walking/not walking data
-// data every 10 seconds - range (in numbers) of BLE device (for development)
-// save add timer started/stopped/ended data
+// save walking/not walking data - DONE
+// data every 10 seconds - range (in numbers) of BLE device (for development) - DONE
+// save add timer started/stopped/ended data - DONE
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -27,6 +28,8 @@ final AndroidNotificationDetails androidPlatformChannelSpecifics =
         'ShoeAlertChannel', 'ShoeAlert', 'Sends Notifications for ShoeAlert');
 final NotificationDetails platformChannelSpecifics =
     NotificationDetails(android: androidPlatformChannelSpecifics);
+const TAG = "ShoeAlert";
+const LOG_LOCATION = "ShoeAlert";
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
@@ -46,6 +49,7 @@ class _MyAppState extends State<MyApp> {
   bool timerRunning = false;
   Duration s = Duration(seconds: 1);
   double timerLength = 30;
+  String distance = "";
 
   startTimeout(double seconds) {
     var duration = s * seconds;
@@ -55,6 +59,11 @@ class _MyAppState extends State<MyApp> {
 
   void handleTimeout() async {
     print("user was walking without the shoe");
+    FlutterLogs.logToFile(
+        logFileName: LOG_LOCATION,
+        overwrite: false,
+        logMessage: "user was walking without the shoe",
+        appendTimeStamp: true);
     await flutterLocalNotificationsPlugin.show(
         0, 'Alert!', 'Wear Your Shoes!', platformChannelSpecifics);
   }
@@ -66,6 +75,7 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     initPlatformState();
+    setUpLogs();
   }
 
   @override
@@ -76,17 +86,33 @@ class _MyAppState extends State<MyApp> {
 
   void onPedestrianStatusChanged(PedestrianStatus event) async {
     print(event.status);
+    FlutterLogs.logToFile(
+        logFileName: LOG_LOCATION,
+        overwrite: false,
+        logMessage: "pedestrian status: ${event.status}",
+        appendTimeStamp: true);
     if (event.status == "walking" &&
         shoeProximity != "Immediate" &&
         shoeProximity != "Near" &&
         !timerRunning) {
       timer = startTimeout(timerLength);
       print("timer started because user is far away and walking");
+      FlutterLogs.logToFile(
+          logFileName: LOG_LOCATION,
+          overwrite: false,
+          logMessage: "timer started because user is far away and walking",
+          appendTimeStamp: true);
     } else if (event.status == "stopped" && timerRunning) {
       timerRunning = !timerRunning;
       timer.cancel();
       print(
           "timer canceled because user has stopped walking while timer is running");
+      FlutterLogs.logToFile(
+          logFileName: LOG_LOCATION,
+          overwrite: false,
+          logMessage:
+              "timer canceled because user has stopped walking while timer is running",
+          appendTimeStamp: true);
     }
   }
 
@@ -123,12 +149,19 @@ class _MyAppState extends State<MyApp> {
             var jsonData = jsonDecode(data);
             if (jsonData["uuid"].toString().toUpperCase() ==
                 "E2C56DB5-DFFB-48D2-B060-D0F5A71096E0") {
+              distance = jsonData["distance"].toString();
               var proximity = jsonData["proximity"];
               if (timerRunning) {
                 if (proximity == "Immediate" || proximity == "Near") {
                   timerRunning = !timerRunning;
                   timer.cancel();
                   print("timer canceled because user is close to shoe");
+                  FlutterLogs.logToFile(
+                      logFileName: LOG_LOCATION,
+                      overwrite: false,
+                      logMessage:
+                          "timer canceled because user is close to shoe",
+                      appendTimeStamp: true);
                 }
               }
               setState(() {
@@ -146,6 +179,31 @@ class _MyAppState extends State<MyApp> {
     await BeaconsPlugin.startMonitoring;
 
     if (!mounted) return;
+  }
+
+  void setUpLogs() async {
+    await FlutterLogs.initLogs(
+        logLevelsEnabled: [
+          LogLevel.INFO,
+          LogLevel.WARNING,
+          LogLevel.ERROR,
+          LogLevel.SEVERE
+        ],
+        timeStampFormat: TimeStampFormat.TIME_FORMAT_READABLE,
+        directoryStructure: DirectoryStructure.FOR_DATE,
+        logTypesEnabled: [LOG_LOCATION],
+        logFileExtension: LogFileExtension.TXT,
+        logsWriteDirectoryName: "ShoeAlertLogs",
+        logsExportDirectoryName: "ShoeAlertLogs/Exported",
+        debugFileOperations: true,
+        isDebuggable: true);
+    Timer.periodic(Duration(seconds: 10), (t) {
+      FlutterLogs.logToFile(
+          logFileName: LOG_LOCATION,
+          overwrite: false,
+          logMessage: "beacon distance: $distance",
+          appendTimeStamp: true);
+    });
   }
 
   @override
@@ -172,7 +230,7 @@ class _MyAppState extends State<MyApp> {
                     timerLength = value;
                   });
                 },
-              )
+              ),
             ],
           ),
         ),

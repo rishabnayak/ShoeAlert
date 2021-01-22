@@ -4,17 +4,26 @@ PODS:
   - Flutter (1.0.0)
   - flutter_local_notifications (0.0.1):
     - Flutter
+  - flutter_logs (0.0.1):
+    - Flutter
+    - ZIPFoundation
   - pedometer (0.0.1):
     - Flutter
   - "permission_handler (5.0.1+1)":
     - Flutter
+  - ZIPFoundation (0.9.11)
 
 DEPENDENCIES:
   - beacons_plugin (from `.symlinks/plugins/beacons_plugin/ios`)
   - Flutter (from `Flutter`)
   - flutter_local_notifications (from `.symlinks/plugins/flutter_local_notifications/ios`)
+  - flutter_logs (from `.symlinks/plugins/flutter_logs/ios`)
   - pedometer (from `.symlinks/plugins/pedometer/ios`)
   - permission_handler (from `.symlinks/plugins/permission_handler/ios`)
+
+SPEC REPOS:
+  trunk:
+    - ZIPFoundation
 
 EXTERNAL SOURCES:
   beacons_plugin:
@@ -23,6 +32,8 @@ EXTERNAL SOURCES:
     :path: Flutter
   flutter_local_notifications:
     :path: ".symlinks/plugins/flutter_local_notifications/ios"
+  flutter_logs:
+    :path: ".symlinks/plugins/flutter_logs/ios"
   pedometer:
     :path: ".symlinks/plugins/pedometer/ios"
   permission_handler:
@@ -32,9 +43,11 @@ SPEC CHECKSUMS:
   beacons_plugin: 451bca1eea362d21793d61d58fa26d494cf19718
   Flutter: 434fef37c0980e73bb6479ef766c45957d4b510c
   flutter_local_notifications: 0c0b1ae97e741e1521e4c1629a459d04b9aec743
+  flutter_logs: 5d0dca26963e0f30b11a995a764744ef77d5d428
   pedometer: 381969883680ade42559782cc41a3bbd453d8234
   permission_handler: eac8e15b4a1a3fba55b761d19f3f4e6b005d15b6
+  ZIPFoundation: b1f0de4eed33e74a676f76e12559ab6b75990197
 
 PODFILE CHECKSUM: fe0e1ee7f3d1f7d00b11b474b62dd62134535aea
 
-COCOAPODS: 1.10.0
+COCOAPODS: 1.10.1
