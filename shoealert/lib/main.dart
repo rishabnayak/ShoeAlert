@@ -10,11 +10,6 @@ import 'package:beacons_plugin/beacons_plugin.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
-// data to collect - would like to be able to make a histogram
-// save walking/not walking data - DONE
-// data every 10 seconds - range (in numbers) of BLE device (for development) - DONE
-// save add timer started/stopped/ended data - DONE
-
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 final AndroidInitializationSettings initializationSettingsAndroid =
@@ -43,13 +38,13 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   Stream<PedestrianStatus> pedestrianStatusStream;
-  String shoeProximity = '?';
+  String shoeProximity = "";
+  String distance = "";
 
   Timer timer;
   bool timerRunning = false;
   Duration s = Duration(seconds: 1);
   double timerLength = 30;
-  String distance = "";
 
   startTimeout(double seconds) {
     var duration = s * seconds;
@@ -170,6 +165,7 @@ class _MyAppState extends State<MyApp> {
         });
 
     await BeaconsPlugin.runInBackground(true);
+    await BeaconsPlugin.startMonitoring;
     if (Platform.isAndroid) {
       BeaconsPlugin.channel.setMethodCallHandler((call) async {
         if (call.method == 'scannerReady') {
@@ -233,6 +229,7 @@ class _MyAppState extends State<MyApp> {
                   });
                 },
               ),
+              shoeProximity.isEmpty ? Text("Beacon Not Found") : SizedBox(),
             ],
           ),
         ),
