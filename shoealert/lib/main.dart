@@ -49,10 +49,10 @@ class _MyAppState extends State<MyApp> {
   startTimeout(double seconds) {
     var duration = s * seconds;
     timerRunning = !timerRunning;
-    return new Timer(duration, handleTimeout);
+    return new Timer.periodic(duration, handleTimeout);
   }
 
-  void handleTimeout() async {
+  void handleTimeout(Timer t) async {
     FlutterLogs.logToFile(
         logFileName: LOG_LOCATION,
         overwrite: false,
